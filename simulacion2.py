@@ -2,19 +2,19 @@ import streamlit as st
 import numpy as np
 import pandas as pd
 import math
-from io import BytesIO
 
-# --- Función para convertir minutos a HH:MM.ss ---
-def minutos_a_hora(minutos):
-    h = int(minutos // 60)
-    m = int(minutos % 60)
-    s = round((minutos - int(minutos)) * 60, 1)
-    return f"{h:02d}:{m:02d}.{s}"
+# --- Función para convertir minutos a HH:MM:SS ---
+def minutos_a_hms(minutos):
+    total_segundos = int(round(minutos * 60))  # convertir minutos a segundos
+    h = total_segundos // 3600
+    m = (total_segundos % 3600) // 60
+    s = total_segundos % 60
+    return f"{h:02d}:{m:02d}:{s:02d}"
 
-# --- Función para generar simulación ---
+# --- Función para simular el proceso ---
 def simular_proceso(iteraciones, hora_inicio, media_llegada, media_corte, media_soldar, M_ver, raiz_ver):
     resultados = []
-    hora_base = hora_inicio * 60  # convertir hora inicio a minutos
+    hora_base = hora_inicio * 60  # convertir hora inicio a minutos desde medianoche
     hora_anterior = hora_base
 
     for i in range(1, iteraciones+1):
@@ -45,18 +45,18 @@ def simular_proceso(iteraciones, hora_inicio, media_llegada, media_corte, media_
 
         resultados.append({
             "#": i,
-            "Tiempo Llegar": round(tiempo_llegada,3),
-            "Hora Llegada": minutos_a_hora(hora_llegada),
-            "Hora Inicio Corte": minutos_a_hora(hora_inicio_corte),
-            "Tiempo Corte": round(tiempo_corte,3),
-            "Hora Fin Corte": minutos_a_hora(hora_fin_corte),
-            "Hora Inicio Soldar": minutos_a_hora(hora_inicio_soldar),
-            "Tiempo Soldar": round(tiempo_soldar,3),
-            "Hora Fin Soldar": minutos_a_hora(hora_fin_soldar),
-            "Hora Inicio Verificar": minutos_a_hora(hora_inicio_verificar),
-            "Tiempo Verificar": round(tiempo_verificar,3),
-            "Hora Fin Verificar": minutos_a_hora(hora_fin_verificar),
-            "Hora Tarea Finalizar": minutos_a_hora(hora_tarea_finalizar)
+            "Tiempo Llegar": minutos_a_hms(tiempo_llegada),
+            "Hora Llegada": minutos_a_hms(hora_llegada),
+            "Hora Inicio Corte": minutos_a_hms(hora_inicio_corte),
+            "Tiempo Corte": minutos_a_hms(tiempo_corte),
+            "Hora Fin Corte": minutos_a_hms(hora_fin_corte),
+            "Hora Inicio Soldar": minutos_a_hms(hora_inicio_soldar),
+            "Tiempo Soldar": minutos_a_hms(tiempo_soldar),
+            "Hora Fin Soldar": minutos_a_hms(hora_fin_soldar),
+            "Hora Inicio Verificar": minutos_a_hms(hora_inicio_verificar),
+            "Tiempo Verificar": minutos_a_hms(tiempo_verificar),
+            "Hora Fin Verificar": minutos_a_hms(hora_fin_verificar),
+            "Hora Tarea Finalizar": minutos_a_hms(hora_tarea_finalizar)
         })
 
         # La hora_anterior para la siguiente barra
@@ -83,8 +83,6 @@ if st.button("Ejecutar simulación"):
     st.dataframe(df)
 
     # Botón para descargar CSV
-    def to_csv(df):
-        return df.to_csv(index=False).encode('utf-8')
-
-    csv = to_csv(df)
+    csv = df.to_csv(index=False).encode('utf-8')
     st.download_button(label="Descargar resultados CSV", data=csv, file_name="simulacion_barras.csv", mime="text/csv")
+
