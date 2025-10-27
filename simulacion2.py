@@ -21,8 +21,9 @@ def simular_proceso(iteraciones, hora_inicio, media_llegada, media_corte, media_
     disponible_soldar = hora_base
     disponible_verificar = hora_base
     hora_anterior_llegada = hora_base
+    acumulado_colas = 0
 
-    for i in range(1, iteraciones+1):
+    for i in range(1, iteraciones + 1):
         # --- Llegada ---
         r_llegada = np.random.random()
         tiempo_llegada = -media_llegada * math.log(1 - r_llegada)
@@ -34,6 +35,7 @@ def simular_proceso(iteraciones, hora_inicio, media_llegada, media_corte, media_
         hora_inicio_corte = max(hora_llegada, disponible_corte)
         hora_fin_corte = hora_inicio_corte + tiempo_corte
         disponible_corte = hora_fin_corte
+        cola_corte = max(0, hora_inicio_corte - hora_llegada)
 
         # --- Soldar ---
         r_soldar = np.random.random()
@@ -41,6 +43,7 @@ def simular_proceso(iteraciones, hora_inicio, media_llegada, media_corte, media_
         hora_inicio_soldar = max(hora_fin_corte, disponible_soldar)
         hora_fin_soldar = hora_inicio_soldar + tiempo_soldar
         disponible_soldar = hora_fin_soldar
+        cola_soldar = max(0, hora_inicio_soldar - hora_fin_corte)
 
         # --- Verificación ---
         r12 = np.random.random(12)
@@ -49,24 +52,37 @@ def simular_proceso(iteraciones, hora_inicio, media_llegada, media_corte, media_
         hora_inicio_verificar = max(hora_fin_soldar, disponible_verificar)
         hora_fin_verificar = hora_inicio_verificar + tiempo_verificar
         disponible_verificar = hora_fin_verificar
+        cola_verificar = max(0, hora_inicio_verificar - hora_fin_soldar)
 
-        # Hora tarea finalizar
-        hora_tarea_finalizar = hora_fin_verificar
+        # --- Tiempos totales ---
+        total_cola = cola_corte + cola_soldar + cola_verificar
+        acumulado_colas += total_cola
 
         resultados.append({
             "#": i,
             "Tiempo Llegar": minutos_a_hms(tiempo_llegada),
             "Hora Llegada": minutos_a_hms(hora_llegada),
+
             "Hora Inicio Corte": minutos_a_hms(hora_inicio_corte),
             "Tiempo Corte": minutos_a_hms(tiempo_corte),
             "Hora Fin Corte": minutos_a_hms(hora_fin_corte),
+
             "Hora Inicio Soldar": minutos_a_hms(hora_inicio_soldar),
             "Tiempo Soldar": minutos_a_hms(tiempo_soldar),
             "Hora Fin Soldar": minutos_a_hms(hora_fin_soldar),
+
             "Hora Inicio Verificar": minutos_a_hms(hora_inicio_verificar),
             "Tiempo Verificar": minutos_a_hms(tiempo_verificar),
             "Hora Fin Verificar": minutos_a_hms(hora_fin_verificar),
-            "Hora Tarea Finalizar": minutos_a_hms(hora_tarea_finalizar)
+
+            # --- Nuevas columnas de colas ---
+            "Cola Corte": minutos_a_hms(cola_corte),
+            "Cola Soldar": minutos_a_hms(cola_soldar),
+            "Cola Verificar": minutos_a_hms(cola_verificar),
+            "Total Cola Iteración": minutos_a_hms(total_cola),
+            "Cola Acumulada": minutos_a_hms(acumulado_colas),
+
+            "Hora Tarea Finalizar": minutos_a_hms(hora_fin_verificar)
         })
 
         # Actualizamos hora anterior de llegada para la próxima barra
@@ -75,7 +91,7 @@ def simular_proceso(iteraciones, hora_inicio, media_llegada, media_corte, media_
     return pd.DataFrame(resultados)
 
 # --- Streamlit Interface ---
-st.title("Simulación de Línea de Producción de Barras")
+st.title("Simulación de Línea de Producción de Barras con Colas")
 
 st.sidebar.header("Parámetros de simulación")
 hora_inicio = st.sidebar.number_input("Hora de inicio (24h)", value=8, min_value=0, max_value=23)
@@ -92,4 +108,4 @@ if st.button("Ejecutar simulación"):
 
     # Descargar CSV
     csv = df.to_csv(index=False).encode('utf-8')
-    st.download_button(label="Descargar resultados CSV", data=csv, file_name="simulacion_barras.csv", mime="text/csv")
+    st.download_button(label="Descargar resultados CSV", data=csv, file_name="simulacion_barras_colas.csv", mime="text/csv")
