@@ -63,25 +63,27 @@ def simular_proceso(iteraciones, hora_inicio, media_llegada, media_corte, media_
             "Tiempo Llegar": minutos_a_hms(tiempo_llegada),
             "Hora Llegada": minutos_a_hms(hora_llegada),
 
+            # --- Corte ---
             "Hora Inicio Corte": minutos_a_hms(hora_inicio_corte),
+            "Cola Corte": minutos_a_hms(cola_corte),
             "Tiempo Corte": minutos_a_hms(tiempo_corte),
             "Hora Fin Corte": minutos_a_hms(hora_fin_corte),
 
+            # --- Soldar ---
             "Hora Inicio Soldar": minutos_a_hms(hora_inicio_soldar),
+            "Cola Soldar": minutos_a_hms(cola_soldar),
             "Tiempo Soldar": minutos_a_hms(tiempo_soldar),
             "Hora Fin Soldar": minutos_a_hms(hora_fin_soldar),
 
+            # --- Verificar ---
             "Hora Inicio Verificar": minutos_a_hms(hora_inicio_verificar),
+            "Cola Verificar": minutos_a_hms(cola_verificar),
             "Tiempo Verificar": minutos_a_hms(tiempo_verificar),
             "Hora Fin Verificar": minutos_a_hms(hora_fin_verificar),
 
-            # --- Nuevas columnas de colas ---
-            "Cola Corte": minutos_a_hms(cola_corte),
-            "Cola Soldar": minutos_a_hms(cola_soldar),
-            "Cola Verificar": minutos_a_hms(cola_verificar),
+            # --- Totales ---
             "Total Cola Iteración": minutos_a_hms(total_cola),
             "Cola Acumulada": minutos_a_hms(acumulado_colas),
-
             "Hora Tarea Finalizar": minutos_a_hms(hora_fin_verificar)
         })
 
@@ -106,6 +108,11 @@ if st.button("Ejecutar simulación"):
     df = simular_proceso(iteraciones, hora_inicio, media_llegada, media_corte, media_soldar, M_ver, raiz_ver)
     st.dataframe(df)
 
+    # Mostrar resumen
+    total_final_colas = df["Cola Acumulada"].iloc[-1]
+    st.metric(label="Tiempo total acumulado en colas", value=total_final_colas)
+
     # Descargar CSV
     csv = df.to_csv(index=False).encode('utf-8')
     st.download_button(label="Descargar resultados CSV", data=csv, file_name="simulacion_barras_colas.csv", mime="text/csv")
+
